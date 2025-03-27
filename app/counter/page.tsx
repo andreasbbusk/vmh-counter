@@ -1,35 +1,20 @@
 "use client";
 
-import { useCounter } from "../(context)/CounterContext";
-import { formatDanishCurrency } from "../(utils)/formatters";
-import { useCountAnimation } from "../(utils)/useCountAnimation";
 import { useEffect, useState } from "react";
-import { database } from "../../firebase";
-import { ref, onValue } from "firebase/database";
+import { useCounter } from "../(context)/CounterContext";
+import { useCountAnimation } from "../(utils)/useCountAnimation";
+import { useSpecialAnimation } from "../(utils)/useSpecialAnimation";
+import { AnimatedCounterDisplay } from "../components/AnimatedCounterDisplay";
+import { SpecialDonationAnimation } from "../components/SpecialDonationAnimation";
+import { FullscreenButton } from "../components/FullscreenButton";
+import { FullscreenContainer } from "../components/FullscreenContainer";
 
 export default function CounterPage() {
   const { count } = useCounter();
-  const [isConnected, setIsConnected] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const specialDonation = useSpecialAnimation();
   const animatedCount = useCountAnimation(count, 1200, 0);
-
-  // Monitor Firebase connection status
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const connectedRef = ref(database, ".info/connected");
-      const unsubscribe = onValue(connectedRef, (snap) => {
-        setIsConnected(!!snap.val());
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error monitoring connection status:", error);
-      setIsConnected(false);
-      return () => {};
-    }
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -40,22 +25,21 @@ export default function CounterPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-slate-100 p-4">
-      <div className="text-center relative">
-        <div className="absolute top-2 right-2 flex items-center">
-          <div
-            className={`w-0 h-0 rounded-full ${
-              isConnected ? "bg-green-500" : "bg-red-500"
-            }`}
-          ></div>
-        </div>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 relative">
+      <FullscreenButton onFullscreenChange={setIsFullscreen} />
+      <FullscreenContainer isFullscreen={isFullscreen}>
+        <div className="text-center relative">
+          <SpecialDonationAnimation
+            active={specialDonation.active}
+            message={specialDonation.message}
+          />
 
-        <div className="bg-white p-10 rounded-2xl shadow-xl mb-10 border border-blue-100">
-          <div className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#e0a619]">
-            {formatDanishCurrency(animatedCount)}
-          </div>
+          <AnimatedCounterDisplay
+            count={animatedCount}
+            isSpecialActive={specialDonation.active}
+          />
         </div>
-      </div>
+      </FullscreenContainer>
     </div>
   );
 }
