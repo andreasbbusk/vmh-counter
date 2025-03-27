@@ -29,7 +29,34 @@ function sendEventToClients(data: CounterEventData) {
   });
 }
 
+// Helper function to get CORS headers
+function getCorsHeaders(origin: string | null) {
+  // Allow the specific origin or all origins with credentials
+  const allowedOrigin = origin || "*";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+// Handle OPTIONS preflight request
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...getCorsHeaders(origin),
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin");
+
   // Create a new stream
   const stream = new ReadableStream({
     start(controller) {
@@ -58,11 +85,14 @@ export async function GET(request: NextRequest) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      ...getCorsHeaders(origin),
     },
   });
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
+
   try {
     const data = await request.json();
 
@@ -80,23 +110,45 @@ export async function POST(request: NextRequest) {
           `Counter updated to ${currentCount}. Broadcasting to ${clients.size} clients.`
         );
 
-        return Response.json({
-          success: true,
-          count: currentCount,
-          clients: clients.size,
-        });
+        return Response.json(
+          {
+            success: true,
+            count: currentCount,
+            clients: clients.size,
+          },
+          {
+            headers: getCorsHeaders(origin),
+          }
+        );
       }
 
-      return Response.json({
-        success: true,
-        count: currentCount,
-        message: "Value unchanged, no broadcast needed",
-      });
+      return Response.json(
+        {
+          success: true,
+          count: currentCount,
+          message: "Value unchanged, no broadcast needed",
+        },
+        {
+          headers: getCorsHeaders(origin),
+        }
+      );
     }
 
-    return Response.json({ error: "Invalid count value" }, { status: 400 });
+    return Response.json(
+      { error: "Invalid count value" },
+      {
+        status: 400,
+        headers: getCorsHeaders(origin),
+      }
+    );
   } catch (error) {
     console.error("Error updating count:", error);
-    return Response.json({ error: "Failed to update count" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to update count" },
+      {
+        status: 500,
+        headers: getCorsHeaders(origin),
+      }
+    );
   }
 }

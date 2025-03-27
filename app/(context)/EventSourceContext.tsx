@@ -32,8 +32,9 @@ export function EventSourceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Create a new EventSource connection
-    const sse = new EventSource("/events");
+    // Create a new EventSource connection with absolute URL
+    const baseUrl = window.location.origin;
+    const sse = new EventSource(`${baseUrl}/events`, { withCredentials: true });
     eventSourceRef.current = sse;
 
     // Connection opened
@@ -68,7 +69,9 @@ export function EventSourceProvider({ children }: { children: ReactNode }) {
       eventSourceRef.current = null;
 
       setTimeout(() => {
-        const newSse = new EventSource("/events");
+        const newSse = new EventSource(`${baseUrl}/events`, {
+          withCredentials: true,
+        });
         eventSourceRef.current = newSse;
       }, 3000);
     };
@@ -99,11 +102,13 @@ export function EventSourceProvider({ children }: { children: ReactNode }) {
         console.log("Sending count update:", count);
         lastSentCount.current = count;
 
-        const response = await fetch("/events", {
+        const baseUrl = window.location.origin;
+        const response = await fetch(`${baseUrl}/events`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({ count }),
         });
 
