@@ -1,10 +1,23 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useCounter } from "../(context)/CounterContext";
 import { useEventSource } from "../(context)/EventSourceContext";
 import { formatDanishCurrency } from "../(utils)/formatters";
 import Link from "next/link";
+import { database } from "../../firebase";
+import { ref, onValue, push, get } from "firebase/database";
+
+interface CounterData {
+  value: number;
+  updatedAt: string;
+}
+
+interface HistoryEntry {
+  value: number;
+  updatedAt: string;
+  key: string;
+}
 
 export default function AdminPage() {
   const { count, setCount } = useCounter();
@@ -13,7 +26,58 @@ export default function AdminPage() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const lastSubmitTime = useRef(0);
+
+  useEffect(() => {
+    const counterRef = ref(database, "counter");
+    const unsubscribe = onValue(counterRef, (snapshot) => {
+      const data = snapshot.val() as CounterData | null;
+      if (data && data.updatedAt) {
+        setLastUpdated(data.updatedAt);
+      }
+    });
+
+    // Load history entries
+    const historyRef = ref(database, "counter_history");
+    get(historyRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const entries: HistoryEntry[] = [];
+
+        // Convert object to array and sort by date (newest first)
+        Object.keys(data).forEach((key) => {
+          entries.push({
+            ...data[key],
+            key,
+          });
+        });
+
+        entries.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+        setHistoryEntries(entries.slice(0, 10)); // Show only the last 10 entries
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("da-DK", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).format(date);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +113,26 @@ export default function AdminPage() {
         return;
       }
 
+      // Add entry to history before updating counter
+      const currentDate = new Date().toISOString();
+      const historyRef = ref(database, "counter_history");
+      push(historyRef, {
+        value: numValue,
+        updatedAt: currentDate,
+        previousValue: count,
+      });
+
       setCount(numValue);
       setInputValue("");
       setSuccess(true);
+
+      // Update local history state
+      const newEntry: HistoryEntry = {
+        value: numValue,
+        updatedAt: currentDate,
+        key: Date.now().toString(), // Temporary key until refresh
+      };
+      setHistoryEntries((prev) => [newEntry, ...prev.slice(0, 9)]);
 
       // Reset submission status after a delay
       setTimeout(() => {
@@ -84,6 +165,11 @@ export default function AdminPage() {
         <div className="mb-6">
           <p className="text-sm mb-2">Nuværende værdi:</p>
           <p className="text-xl font-bold">{formatDanishCurrency(count)}</p>
+          {lastUpdated && (
+            <p className="text-xs text-gray-500 mt-1">
+              Sidst opdateret: {formatDate(lastUpdated)}
+            </p>
+          )}
         </div>
 
         {error && (
@@ -127,7 +213,68 @@ export default function AdminPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-blue-600 hover:underline text-sm mb-2 flex items-center"
+          >
+            {showHistory ? "Skjul historik" : "Vis opdateringshistorik"}
+            <svg
+              className={`ml-1 w-4 h-4 transform ${
+                showHistory ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {showHistory && (
+            <div className="border rounded-md mt-2 overflow-hidden">
+              {historyEntries.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="py-2 px-3 text-left font-medium text-gray-500">
+                          Værdi
+                        </th>
+                        <th className="py-2 px-3 text-left font-medium text-gray-500">
+                          Dato
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {historyEntries.map((entry) => (
+                        <tr key={entry.key} className="hover:bg-gray-50">
+                          <td className="py-2 px-3">
+                            {formatDanishCurrency(entry.value)}
+                          </td>
+                          <td className="py-2 px-3">
+                            {formatDate(entry.updatedAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-center py-4 text-gray-500">
+                  Ingen historik endnu
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 text-center">
           <Link href="/counter" className="text-blue-600 hover:underline">
             Se tæller
           </Link>

@@ -8,6 +8,8 @@ import {
   ReactNode,
   useEffect,
 } from "react";
+import { database } from "../../firebase";
+import { ref, onValue, set } from "firebase/database";
 
 interface CounterContextType {
   count: number;
@@ -18,27 +20,51 @@ interface CounterContextType {
 const CounterContext = createContext<CounterContextType | undefined>(undefined);
 
 const STORAGE_KEY = "vmh-counter-value";
+const DB_REF = "counter";
 
 export function CounterProvider({ children }: { children: ReactNode }) {
   const [count, setCount] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const isUpdatingRef = useRef(false);
 
-  // Load the counter value from localStorage on mount
+  // Load the counter value from Firebase and fall back to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedValue = localStorage.getItem(STORAGE_KEY);
-      if (storedValue) {
-        try {
-          const parsedValue = JSON.parse(storedValue);
-          if (typeof parsedValue === "number" && !isNaN(parsedValue)) {
-            setCount(parsedValue);
+      // Get reference to counter in Firebase
+      const counterRef = ref(database, DB_REF);
+
+      // Listen for changes to the counter value
+      const unsubscribe = onValue(counterRef, (snapshot) => {
+        const data = snapshot.val();
+        if (
+          data !== null &&
+          typeof data.value === "number" &&
+          !isNaN(data.value)
+        ) {
+          setCount(data.value);
+        } else {
+          // If no data in Firebase, try to get from localStorage
+          const storedValue = localStorage.getItem(STORAGE_KEY);
+          if (storedValue) {
+            try {
+              const parsedValue = JSON.parse(storedValue);
+              if (typeof parsedValue === "number" && !isNaN(parsedValue)) {
+                setCount(parsedValue);
+                // Also update Firebase with this value
+                set(counterRef, {
+                  value: parsedValue,
+                  updatedAt: new Date().toISOString(),
+                });
+              }
+            } catch (error) {
+              console.error("Failed to parse stored counter value:", error);
+            }
           }
-        } catch (error) {
-          console.error("Failed to parse stored counter value:", error);
         }
-      }
-      setIsLoaded(true);
+        setIsLoaded(true);
+      });
+
+      return () => unsubscribe();
     }
   }, []);
 
@@ -65,6 +91,13 @@ export function CounterProvider({ children }: { children: ReactNode }) {
     // Only trigger external updates if we're not already updating
     if (!isUpdatingRef.current) {
       setCount(newCount);
+
+      // Update Firebase with the new value
+      const counterRef = ref(database, DB_REF);
+      set(counterRef, {
+        value: newCount,
+        updatedAt: new Date().toISOString(),
+      });
     }
   };
 
