@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useCounter } from "../(context)/CounterContext";
-import { useEventSource } from "../(context)/EventSourceContext";
 import { formatDanishCurrency } from "../(utils)/formatters";
 import Link from "next/link";
 import { database } from "../../firebase";
@@ -21,7 +20,7 @@ interface HistoryEntry {
 
 export default function AdminPage() {
   const { count, setCount } = useCounter();
-  const { isConnected } = useEventSource();
+  const [isConnected, setIsConnected] = useState(false);
   const [inputValue, setInputValue] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
@@ -30,6 +29,24 @@ export default function AdminPage() {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const lastSubmitTime = useRef(0);
+
+  // Monitor Firebase connection status
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const connectedRef = ref(database, ".info/connected");
+      const unsubscribe = onValue(connectedRef, (snap) => {
+        setIsConnected(!!snap.val());
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error monitoring connection status:", error);
+      setIsConnected(false);
+      return () => {};
+    }
+  }, []);
 
   useEffect(() => {
     const counterRef = ref(database, "counter");

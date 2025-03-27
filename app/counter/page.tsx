@@ -1,16 +1,35 @@
 "use client";
 
 import { useCounter } from "../(context)/CounterContext";
-import { useEventSource } from "../(context)/EventSourceContext";
 import { formatDanishCurrency } from "../(utils)/formatters";
 import { useCountAnimation } from "../(utils)/useCountAnimation";
 import { useEffect, useState } from "react";
+import { database } from "../../firebase";
+import { ref, onValue } from "firebase/database";
 
 export default function CounterPage() {
   const { count } = useCounter();
-  const { isConnected } = useEventSource();
+  const [isConnected, setIsConnected] = useState(false);
   const [mounted, setMounted] = useState(false);
   const animatedCount = useCountAnimation(count, 1200, 0);
+
+  // Monitor Firebase connection status
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const connectedRef = ref(database, ".info/connected");
+      const unsubscribe = onValue(connectedRef, (snap) => {
+        setIsConnected(!!snap.val());
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error monitoring connection status:", error);
+      setIsConnected(false);
+      return () => {};
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);

@@ -5,9 +5,10 @@ import {
   useContext,
   useEffect,
   useState,
-  useRef,
   ReactNode,
 } from "react";
+import { database } from "../../firebase";
+import { ref, onValue } from "firebase/database";
 import { useCounter } from "./CounterContext";
 
 interface EventSourceContextType {
@@ -18,113 +19,55 @@ const EventSourceContext = createContext<EventSourceContextType | undefined>(
   undefined
 );
 
+const DB_REF = "counter";
+
 export function EventSourceProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
-  const { count, updateCountLocally } = useCounter();
-  const [isSending, setIsSending] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const { updateCountLocally } = useCounter();
 
-  // Use refs to track the last received and sent values
-  const lastReceivedCount = useRef<number | null>(null);
-  const lastSentCount = useRef<number | null>(null);
-
-  // Initialize EventSource connection
+  // Use Firebase Realtime Database for live updates instead of SSE
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Create a new EventSource connection with absolute URL
-    const baseUrl = window.location.origin;
-    const sse = new EventSource(`${baseUrl}/events`, { withCredentials: true });
-    eventSourceRef.current = sse;
+    try {
+      // Get reference to counter in Firebase
+      const counterRef = ref(database, DB_REF);
 
-    // Connection opened
-    sse.onopen = () => {
-      console.log("SSE connection opened");
+      // Set initial connection state
       setIsConnected(true);
-    };
 
-    // Listen for messages
-    sse.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (typeof data.count === "number") {
-          // Only update if the count is different from what we last received
-          if (data.count !== lastReceivedCount.current) {
-            console.log("Received count update:", data.count);
-            lastReceivedCount.current = data.count;
-            updateCountLocally(data.count);
+      // Listen for changes to the counter value
+      const unsubscribe = onValue(
+        counterRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          // Successfully connected
+          setIsConnected(true);
+
+          if (
+            data !== null &&
+            typeof data.value === "number" &&
+            !isNaN(data.value)
+          ) {
+            console.log("Received Firebase update:", data.value);
+            updateCountLocally(data.value);
           }
+        },
+        (error) => {
+          // Error handling
+          console.error("Firebase connection error:", error);
+          setIsConnected(false);
         }
-      } catch (error) {
-        console.error("Error parsing SSE message:", error);
-      }
-    };
+      );
 
-    // Error handling
-    sse.onerror = (error) => {
-      console.error("SSE connection error:", error);
+      // Clean up on unmount
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error setting up Firebase connection:", error);
       setIsConnected(false);
-      // Try to reconnect
-      sse.close();
-      eventSourceRef.current = null;
-
-      setTimeout(() => {
-        const newSse = new EventSource(`${baseUrl}/events`, {
-          withCredentials: true,
-        });
-        eventSourceRef.current = newSse;
-      }, 3000);
-    };
-
-    // Clean up on unmount
-    return () => {
-      sse.close();
-      eventSourceRef.current = null;
-    };
-  }, [updateCountLocally]);
-
-  // Send count updates to the server
-  useEffect(() => {
-    // Don't send updates if we're not connected, if we're already sending,
-    // or if this is the same value we just received or sent
-    if (
-      !isConnected ||
-      isSending ||
-      count === lastReceivedCount.current ||
-      count === lastSentCount.current
-    ) {
-      return;
+      return () => {}; // Empty cleanup function
     }
-
-    const sendUpdate = async () => {
-      try {
-        setIsSending(true);
-        console.log("Sending count update:", count);
-        lastSentCount.current = count;
-
-        const baseUrl = window.location.origin;
-        const response = await fetch(`${baseUrl}/events`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ count }),
-        });
-
-        if (!response.ok) {
-          console.error("Failed to update count:", await response.text());
-        }
-      } catch (error) {
-        console.error("Error sending count update:", error);
-      } finally {
-        setIsSending(false);
-      }
-    };
-
-    // Send immediately without delay
-    sendUpdate();
-  }, [count, isConnected, isSending]);
+  }, [updateCountLocally]);
 
   return (
     <EventSourceContext.Provider value={{ isConnected }}>
