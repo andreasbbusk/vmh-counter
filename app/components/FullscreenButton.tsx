@@ -51,7 +51,7 @@ export function FullscreenButton({
   return (
     <motion.button
       onClick={toggleFullscreen}
-      className="absolute top-3 right-3 p-2 bg-white/60 hover:bg-white/90 rounded-full text-gray-700 z-10 transition-all"
+      className="absolute bottom-3 right-3 p-2 bg-white/60 hover:bg-white/90 rounded-full text-gray-700 z-10 transition-all"
       whileTap={{ scale: 0.95 }}
       title={isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)"}
     >

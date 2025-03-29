@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useCounter } from "../(context)/CounterContext";
 import { formatDanishCurrency } from "../(utils)/formatters";
-import Link from "next/link";
 import { database } from "../../firebase";
 import { ref, onValue, push, get, set, remove } from "firebase/database";
 import {
@@ -97,7 +96,6 @@ const RollbackAction = ({
 
 export default function AdminPage() {
   const { count, setCount } = useCounter();
-  const [isConnected, setIsConnected] = useState(false);
   const [inputValue, setInputValue] = useState<string>("");
   const [addValue, setAddValue] = useState<string>("");
   const [specialValue, setSpecialValue] = useState<string>("");
@@ -110,24 +108,6 @@ export default function AdminPage() {
   const [rollbackEntry, setRollbackEntry] = useState<HistoryEntry | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const lastSubmitTime = useRef(0);
-
-  // Monitor Firebase connection status
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const connectedRef = ref(database, ".info/connected");
-      const unsubscribe = onValue(connectedRef, (snap) => {
-        setIsConnected(!!snap.val());
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error monitoring connection status:", error);
-      setIsConnected(false);
-      return () => {};
-    }
-  }, []);
 
   useEffect(() => {
     const counterRef = ref(database, "counter");
@@ -610,19 +590,13 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-2 sm:p-4 text-black">
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 text-black">
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader className="space-y-1 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl sm:text-2xl">
               Vejle mod hudcancer
             </CardTitle>
-            <Badge
-              variant={isConnected ? "default" : "destructive"}
-              className="self-start sm:self-auto h-6 w-min whitespace-nowrap"
-            >
-              {isConnected ? "Online" : "Offline"}
-            </Badge>
           </div>
           <CardDescription className="text-sm">
             Styr, opdater og nulstil VMH-tælleren
@@ -658,7 +632,7 @@ export default function AdminPage() {
             <TabsList className="grid grid-cols-3 mb-4 w-full">
               <TabsTrigger value="set">Fast værdi</TabsTrigger>
               <TabsTrigger value="add">Tilføj værdi</TabsTrigger>
-              <TabsTrigger value="special">Speciel donation</TabsTrigger>
+              <TabsTrigger value="special">Speciel</TabsTrigger>
             </TabsList>
 
             <TabsContent value="set" className="space-y-4 mt-0">
@@ -766,7 +740,7 @@ export default function AdminPage() {
                       htmlFor="specialMessage"
                       className="text-sm font-medium"
                     >
-                      Besked (valgfri)
+                      Besked
                     </label>
                     <Input
                       id="specialMessage"
@@ -936,14 +910,6 @@ export default function AdminPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
-
-          <div className="w-full flex justify-center mt-2">
-            <Link href="/counter">
-              <Button variant="ghost" size="sm">
-                Se tæller
-              </Button>
-            </Link>
           </div>
         </CardFooter>
       </Card>
