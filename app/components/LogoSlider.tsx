@@ -61,7 +61,7 @@ export function LogoSlider() {
         {LOGOS.map((logo) => (
           <div
             key={logo.id}
-            className="flex-none px-4 mx-4 sm:px-6 sm:mx-6 h-28 sm:h-36 md:h-40 min-w-[220px] sm:min-w-[260px] md:min-w-[300px]"
+            className="flex-none h-28 sm:h-36 md:h-40"
           >
             <div className="flex items-center justify-center h-full">
               <div className="relative h-24 sm:h-32 md:h-36 w-full">
@@ -80,7 +80,7 @@ export function LogoSlider() {
         {LOGOS.map((logo) => (
           <div
             key={`${logo.id}-duplicate`}
-            className="flex-none px-4 mx-4 sm:px-6 sm:mx-6 h-28 sm:h-36 md:h-40 min-w-[220px] sm:min-w-[260px] md:min-w-[300px]"
+            className="flex-none h-28 sm:h-36 md:h-40"
           >
             <div className="flex items-center justify-center h-full">
               <div className="relative h-24 sm:h-32 md:h-36 w-full">
