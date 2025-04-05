@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Ubuntu } from "next/font/google";
-import { CounterProvider } from "./(context)/CounterContext";
+import { CounterProvider } from "../context/CounterContext";
 import "./globals.css";
 
 const ubuntu = Ubuntu({
@@ -10,8 +10,8 @@ const ubuntu = Ubuntu({
 });
 
 export const metadata: Metadata = {
-  title: "VMH Tæller",
-  description: "En tællerapplikation til VMH",
+  title: "Donationer",
+  description: "En tællerapplikation til Donationer",
 };
 
 export default function RootLayout({

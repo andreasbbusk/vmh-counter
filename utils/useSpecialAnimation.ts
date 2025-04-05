@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { database } from "../../firebase";
+import { database } from "../firebase";
 import { ref, onValue, set } from "firebase/database";
 
 interface SpecialDonationState {

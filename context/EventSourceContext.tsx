@@ -7,24 +7,26 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { database } from "../../firebase";
-import { ref, onValue, set } from "firebase/database";
+import { database } from "../firebase";
+import { ref, onValue } from "firebase/database";
 import { useCounter } from "./CounterContext";
 
-interface SocketContextType {
+interface EventSourceContextType {
   isConnected: boolean;
 }
 
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+const EventSourceContext = createContext<EventSourceContextType | undefined>(
+  undefined
+);
+
 const DB_REF = "counter";
 
-export function SocketProvider({ children }: { children: ReactNode }) {
+export function EventSourceProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
-  const { count, updateCountLocally } = useCounter();
+  const { updateCountLocally } = useCounter();
 
-  // Initialize Firebase connection
+  // Use Firebase Realtime Database for live updates instead of SSE
   useEffect(() => {
-    // Client-side only
     if (typeof window === "undefined") return;
 
     try {
@@ -47,13 +49,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             typeof data.value === "number" &&
             !isNaN(data.value)
           ) {
-            console.log("Received Firebase socket update:", data.value);
+            console.log("Received Firebase update:", data.value);
             updateCountLocally(data.value);
           }
         },
         (error) => {
           // Error handling
-          console.error("Firebase socket connection error:", error);
+          console.error("Firebase connection error:", error);
           setIsConnected(false);
         }
       );
@@ -61,38 +63,25 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       // Clean up on unmount
       return () => unsubscribe();
     } catch (error) {
-      console.error("Error setting up Firebase socket connection:", error);
+      console.error("Error setting up Firebase connection:", error);
       setIsConnected(false);
       return () => {}; // Empty cleanup function
     }
   }, [updateCountLocally]);
 
-  // Update the Firebase counter when the local count changes
-  useEffect(() => {
-    if (isConnected && typeof window !== "undefined") {
-      try {
-        const counterRef = ref(database, DB_REF);
-        set(counterRef, {
-          value: count,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error("Error updating Firebase counter:", error);
-      }
-    }
-  }, [count, isConnected]);
-
   return (
-    <SocketContext.Provider value={{ isConnected }}>
+    <EventSourceContext.Provider value={{ isConnected }}>
       {children}
-    </SocketContext.Provider>
+    </EventSourceContext.Provider>
   );
 }
 
-export function useSocket() {
-  const context = useContext(SocketContext);
+export function useEventSource() {
+  const context = useContext(EventSourceContext);
   if (context === undefined) {
-    throw new Error("useSocket must be used within a SocketProvider");
+    throw new Error(
+      "useEventSource must be used within an EventSourceProvider"
+    );
   }
   return context;
 }

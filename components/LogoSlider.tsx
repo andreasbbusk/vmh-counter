@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { LOGOS } from "../logos";
+import { LOGOS } from "../app/logos";
 
 export function LogoSlider() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,7 @@ export function LogoSlider() {
   }, [scrollPosition, logoSetWidth]);
 
   return (
-    <div className="w-full bg-white py-2  border-t border-[#e0a619]">
+    <div className="w-full py-2 border-y border-[#e0a619]">
       <div
         ref={containerRef}
         className="flex items-center overflow-hidden whitespace-nowrap"
@@ -61,25 +61,6 @@ export function LogoSlider() {
         {LOGOS.map((logo) => (
           <div
             key={logo.id}
-            className="flex-none h-28 sm:h-36 md:h-40 min-w-[220px] sm:min-w-[260px] md:min-w-[300px]"
-          >
-            <div className="flex items-center justify-center h-full">
-              <div className="relative h-24 sm:h-32 md:h-36 w-full">
-                <Image
-                  src={logo.src}
-                  alt={logo.alt}
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-        {/* Duplicate set for infinite loop */}
-        {LOGOS.map((logo) => (
-          <div
-            key={`${logo.id}-duplicate`}
             className="flex-none h-28 sm:h-36 md:h-40 min-w-[220px] sm:min-w-[260px] md:min-w-[300px]"
           >
             <div className="flex items-center justify-center h-full">

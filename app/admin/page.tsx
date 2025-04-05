@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useCounter } from "../(context)/CounterContext";
-import { formatDanishCurrency } from "../(utils)/formatters";
+import { useCounter } from "../../context/CounterContext";
+import { formatDanishCurrency } from "../../utils/formatters";
 import { database } from "../../firebase";
 import { ref, onValue, push, get, set, remove } from "firebase/database";
 import {
