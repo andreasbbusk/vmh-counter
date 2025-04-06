@@ -4,6 +4,7 @@ import { ref, onValue, set } from "firebase/database";
 
 interface SpecialDonationState {
   message?: string;
+  amount?: number;
   active: boolean;
 }
 
@@ -24,6 +25,7 @@ export function useSpecialAnimation(): SpecialDonationState {
       if (data && data.specialAnimation) {
         setSpecialDonation({
           message: data.message,
+          amount: data.amount,
           active: true,
         });
 
@@ -36,9 +38,10 @@ export function useSpecialAnimation(): SpecialDonationState {
             const newData = { ...data };
             delete newData.specialAnimation;
             delete newData.message;
+            delete newData.amount;
             set(ref(database, "counter"), newData);
           }
-        }, 8000);
+        }, 10000);
       }
     });
 

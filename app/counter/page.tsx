@@ -34,11 +34,12 @@ export default function CounterPage() {
           </div>
           <FullscreenButton onFullscreenChange={setIsFullscreen} />
 
-          <div className="flex-1 flex flex-col items-center justify-center p-4 w-full mb-16">
+          <div className="flex-1 flex flex-col justify-center p-4 w-full mb-20">
             <div className="text-center relative">
               <SpecialDonationAnimation
                 active={specialDonation.active}
                 message={specialDonation.message}
+                amount={specialDonation.amount}
               />
 
               <AnimatedCounterDisplay

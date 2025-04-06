@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="da">
-      <body className={`${ubuntu.variable} font-sans antialiased`}>
+      <body className={`${ubuntu.variable} antialiased`}>
         <CounterProvider>{children}</CounterProvider>
       </body>
     </html>

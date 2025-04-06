@@ -40,6 +40,7 @@ interface CounterData {
   value: number;
   updatedAt: string;
   message?: string;
+  amount?: number;
   specialAnimation?: boolean;
 }
 
@@ -51,6 +52,7 @@ interface HistoryEntry {
   addedAmount?: number;
   previousValue?: number;
   message?: string;
+  amount?: number;
   specialAnimation?: boolean;
 }
 
@@ -414,6 +416,7 @@ export default function AdminPage() {
           value: newTotal,
           updatedAt: currentDate,
           message: message || undefined,
+          amount: addAmount,
           specialAnimation: true,
         });
 
@@ -426,6 +429,7 @@ export default function AdminPage() {
           addedAmount: addAmount,
           type: "special",
           message: message || undefined,
+          amount: addAmount,
           specialAnimation: true,
         });
 
@@ -443,6 +447,7 @@ export default function AdminPage() {
           previousValue: count,
           addedAmount: addAmount,
           message: message || undefined,
+          amount: addAmount,
           specialAnimation: true,
         };
         setHistoryEntries((prev) => [newEntry, ...prev.slice(0, 19)]);
@@ -835,6 +840,11 @@ export default function AdminPage() {
                             {entry.type === "special" && entry.message && (
                               <span className="text-xs text-gray-500 block mt-1">
                                 &ldquo;{entry.message}&rdquo;
+                                {entry.amount && (
+                                  <span className="font-medium block mt-0.5">
+                                    {formatDanishCurrency(entry.amount)} kr
+                                  </span>
+                                )}
                               </span>
                             )}
                           </td>

@@ -14,7 +14,7 @@ interface AnimatedCounterDisplayProps {
 export function AnimatedCounterDisplay({ count }: AnimatedCounterDisplayProps) {
   return (
     <div className="transition-all duration-500">
-      <div className="text-7xl md:text-8xl lg:text-9xl lg:text-[10rem] font-bold text-[#e0a619]">
+      <div className="text-7xl md:text-8xl lg:text-[10rem] font-bold text-[#e0a619]">
         <CountUp
           end={count}
           duration={8}

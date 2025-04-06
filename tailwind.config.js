@@ -8,6 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        ubuntu: ["var(--font-ubuntu)", "sans-serif"],
         sans: [
           "var(--font-ubuntu)",
           "ui-sans-serif",
@@ -17,5 +18,6 @@ module.exports = {
       },
     },
   },
+
   plugins: [],
 };

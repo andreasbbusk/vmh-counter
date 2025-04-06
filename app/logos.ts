@@ -310,4 +310,29 @@ export const LOGOS: Logo[] = [
     alt: "Logo 58",
     src: "/images/logos/Logos_58.png",
   },
+  {
+    id: 59,
+    name: "Logo_59",
+    alt: "Logo 59",
+    src: "/images/logos/Logos_59.png",
+  },
+  {
+    id: 60,
+    name: "Logo_60",
+    alt: "Logo 60",
+    src: "/images/logos/Logos_60.png",
+  },
+  {
+    id: 61,
+    name: "Logo_61",
+    alt: "Logo 61",
+    src: "/images/logos/Logos_61.png",
+  },
+  {
+    id: 62,
+    name: "Logo_62",
+    alt: "Logo 62",
+    src: "/images/logos/Logos_62.png",
+  },
+  
 ];
