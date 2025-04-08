@@ -9,7 +9,7 @@ import {
   useEffect,
 } from "react";
 import { database } from "../firebase";
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, get } from "firebase/database";
 
 interface CounterContextType {
   count: number;
@@ -94,9 +94,25 @@ export function CounterProvider({ children }: { children: ReactNode }) {
 
       // Update Firebase with the new value
       const counterRef = ref(database, DB_REF);
-      set(counterRef, {
-        value: newCount,
-        updatedAt: new Date().toISOString(),
+
+      // Get current data first to preserve any special fields
+      get(counterRef).then((snapshot) => {
+        const currentData = snapshot.val() || {};
+
+        // Create new data object, preserving any special fields
+        const newData = {
+          ...currentData, // Keep existing data (like special animation flags)
+          value: newCount, // Update the value
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Only update if there's no special animation in progress
+        // This prevents interfering with special donations
+        if (!currentData.specialAnimation) {
+          set(counterRef, newData);
+        } else {
+          console.log("Skipping counter update during special animation");
+        }
       });
     }
   };

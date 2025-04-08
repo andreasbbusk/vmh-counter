@@ -407,20 +407,40 @@ export default function AdminPage() {
       const newTotal = count + addAmount;
       const message = specialMessage.trim();
 
-      // Update Firebase counter with special animation flag
+      // Make sure the amount is a valid number
+      if (typeof addAmount !== "number" || isNaN(addAmount)) {
+        setError("Ugyldigt beløb format");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create the special donation data object
       const currentDate = new Date().toISOString();
-      const counterRef = ref(database, "counter");
 
       try {
+        // IMPORTANT CHANGE: Store special donation in a separate path
+        // This avoids conflicts with the counter update system
+        const specialAnimationRef = ref(database, "special_animation");
+
+        // Create special animation data
+        const specialData = {
+          active: true,
+          amount: addAmount,
+          message: message || undefined,
+          timestamp: currentDate,
+        };
+
+        // Store the special animation data
+        await set(specialAnimationRef, specialData);
+
+        // Also update the counter value as usual
+        const counterRef = ref(database, "counter");
         await set(counterRef, {
           value: newTotal,
           updatedAt: currentDate,
-          message: message || undefined,
-          amount: addAmount,
-          specialAnimation: true,
         });
 
-        // Add entry to history after counter is updated
+        // Add entry to history
         const historyRef = ref(database, "counter_history");
         await push(historyRef, {
           value: newTotal,

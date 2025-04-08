@@ -17,31 +17,47 @@ export function useSpecialAnimation(): SpecialDonationState {
     active: false,
   });
 
-  // Monitor for special animations
+  // Monitor for special animations using the dedicated path
   useEffect(() => {
-    const counterRef = ref(database, "counter");
-    const unsubscribe = onValue(counterRef, (snapshot) => {
+    // Use the dedicated special_animation path
+    const specialAnimationRef = ref(database, "special_animation");
+
+    const unsubscribe = onValue(specialAnimationRef, (snapshot) => {
       const data = snapshot.val();
-      if (data && data.specialAnimation) {
+
+      if (data && data.active) {
+        // Extract and validate the amount
+        let amount: number | undefined = undefined;
+
+        if (data.amount !== undefined) {
+          // Convert to number and validate
+          amount = Number(data.amount);
+          if (isNaN(amount)) {
+            amount = undefined;
+          }
+        }
+
+        // Update the state with the special donation data
         setSpecialDonation({
           message: data.message,
-          amount: data.amount,
+          amount: amount,
           active: true,
         });
 
-        // Reset the special animation flag after 8 seconds
-        setTimeout(() => {
+        // Auto-reset after timeout (this is also handled in the component, but keeping for redundancy)
+        const timer = setTimeout(() => {
           setSpecialDonation({ active: false });
 
-          // Clear the specialAnimation flag in Firebase
-          if (data) {
-            const newData = { ...data };
-            delete newData.specialAnimation;
-            delete newData.message;
-            delete newData.amount;
-            set(ref(database, "counter"), newData);
-          }
+          // Reset the active flag in Firebase
+          set(specialAnimationRef, { active: false });
         }, 10000);
+
+        return () => clearTimeout(timer);
+      } else {
+        // No active animation or data cleared
+        if (specialDonation.active) {
+          setSpecialDonation({ active: false });
+        }
       }
     });
 
