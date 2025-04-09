@@ -7,17 +7,24 @@ interface SpecialDonationAnimationProps {
   active: boolean;
   message?: string;
   amount?: number;
+  onActiveChange?: (isActive: boolean) => void;
 }
 
 export function SpecialDonationAnimation({
   active: propActive,
   message: propMessage,
   amount: propAmount,
+  onActiveChange,
 }: SpecialDonationAnimationProps) {
   const messageRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState<boolean>(propActive);
   const [message, setMessage] = useState<string | null>(propMessage || null);
   const [amount, setAmount] = useState<number | null>(propAmount || null);
+
+  // Notify parent component when active state changes
+  useEffect(() => {
+    onActiveChange?.(isActive);
+  }, [isActive, onActiveChange]);
 
   // Listen directly to the special_animation path in Firebase
   useEffect(() => {
@@ -45,13 +52,13 @@ export function SpecialDonationAnimation({
           }
         }
 
-        // Automatically reset after 10 seconds
+        // Automatically reset after 7 seconds
         const timer = setTimeout(() => {
           setIsActive(false);
 
           // Also clear the flag in Firebase
           set(specialAnimationRef, { active: false });
-        }, 10000);
+        }, 7000);
 
         return () => clearTimeout(timer);
       } else {
@@ -85,7 +92,7 @@ export function SpecialDonationAnimation({
       gsap.to(messageRef.current, {
         y: 0,
         opacity: 1,
-        duration: 0.3,
+        duration: 0.2,
         ease: "power2.out",
       });
     } else if (!isActive && messageRef.current) {
@@ -93,7 +100,7 @@ export function SpecialDonationAnimation({
       gsap.to(messageRef.current, {
         y: 20,
         opacity: 0,
-        duration: 0.4,
+        duration: 0.2,
         ease: "power2.in",
       });
     }
@@ -119,9 +126,7 @@ export function SpecialDonationAnimation({
           className="bg-[#FBF5EB] rounded-2xl max-w-[1200px] w-full h-[400px] flex flex-col items-center justify-center"
         >
           <div className="text-center">
-            <h2 className="font-bold text-[#D9A84E] text-6xl ">
-              {message}
-            </h2>
+            <h2 className="font-bold text-[#D9A84E] text-6xl ">{message}</h2>
             <div className="text-[#D9A84E] text-[10rem] font-bold">
               {formatAmount(amount)}
             </div>

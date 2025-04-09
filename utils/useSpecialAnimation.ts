@@ -50,7 +50,7 @@ export function useSpecialAnimation(): SpecialDonationState {
 
           // Reset the active flag in Firebase
           set(specialAnimationRef, { active: false });
-        }, 10000);
+        }, 7000);
 
         return () => clearTimeout(timer);
       } else {
