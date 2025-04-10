@@ -58,7 +58,7 @@ export function SpecialDonationAnimation({
 
           // Also clear the flag in Firebase
           set(specialAnimationRef, { active: false });
-        }, 7000);
+        }, 5000);
 
         return () => clearTimeout(timer);
       } else {
