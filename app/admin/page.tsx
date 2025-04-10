@@ -616,7 +616,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col items-center justify-center p-2 sm:p-4 text-black">
-      <Card className="w-full max-w-lg shadow-lg">
+      <Card className="w-full max-w-lg shadow-none border-none">
         <CardHeader className="space-y-1 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl sm:text-2xl">

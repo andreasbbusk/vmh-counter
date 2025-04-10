@@ -21,7 +21,7 @@ export function SpecialDonationAnimation({
   const [message, setMessage] = useState<string | null>(propMessage || null);
   const [amount, setAmount] = useState<number | null>(propAmount || null);
 
-  // Notify parent component when active state changes
+  // Notify parent component immediately when active state changes
   useEffect(() => {
     onActiveChange?.(isActive);
   }, [isActive, onActiveChange]);
@@ -35,6 +35,7 @@ export function SpecialDonationAnimation({
       const data = snapshot.val();
 
       if (data && data.active) {
+        // Activate immediately
         setIsActive(true);
 
         if (data.message) {
@@ -52,7 +53,7 @@ export function SpecialDonationAnimation({
           }
         }
 
-        // Automatically reset after 7 seconds
+        // Automatically reset after 5 seconds
         const timer = setTimeout(() => {
           setIsActive(false);
 
@@ -119,7 +120,10 @@ export function SpecialDonationAnimation({
   };
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
+    <div
+      className="absolute inset-0 flex items-center justify-center px-6"
+      style={{ zIndex: 10 }}
+    >
       {isActive && (
         <div
           ref={messageRef}
